@@ -1,41 +1,51 @@
-name: springboot-kafka-pipeline
+name: Maven CI - Multi Module Spring Boot Kafka
 
 on:
   push:
     branches:
+      - main
+      - master
       - wikimedia
   pull_request:
     branches:
+      - main
+      - master
       - wikimedia
 
 jobs:
   build:
+    name: Build and Test Kafka Modules
     runs-on: ubuntu-latest
 
     steps:
+      # Step 1: Checkout repo
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      # Step 2: Setup Java
       - name: Set up JDK 17
-        uses: actions/setup-java@v3
+        uses: actions/setup-java@v4
         with:
           java-version: '17'
           distribution: 'temurin'
           cache: 'maven'
 
-      - name: Verify Maven installation
-        run: mvn -v
+      # Step 3: Build & Test all modules
+      - name: Build and Test all modules
+        run: mvn -B clean verify --file pom.xml
 
-      - name: Build all modules (Producer + Consumer)
-        run: mvn -B clean package -DskipTests
+      # Step 4: (Optional) Run each module separately
+      - name: Verify Kafka Producer module
+        run: mvn -B clean test --file kafka-producer/pom.xml
 
-      - name: List JARs
-        run: find . -name "*.jar"
+      - name: Verify Kafka Consumer module
+        run: mvn -B clean test --file kafka-consumer/pom.xml
 
+      # Step 5: (Optional) Upload JAR artifacts
       - name: Upload build artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
-          name: kafka-app-builds
+          name: kafka-apps
           path: |
             kafka-producer/target/*.jar
             kafka-consumer/target/*.jar
