@@ -1,0 +1,40 @@
+name: springboot-kafka-pipeline
+
+on:
+  push:
+    branches:
+      - wikimedia
+  pull_request:
+    branches:
+      - wikimedia
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v3
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Build Producer module
+        run: mvn -f kafka-producer/pom.xml clean package -DskipTests
+
+      - name: Build Consumer module
+        run: mvn -f kafka-consumer/pom.xml clean package -DskipTests
+
+      - name: Run Unit Tests
+        run: mvn test
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: kafka-app-builds
+          path: |
+            kafka-producer/target/*.jar
+            kafka-consumer/target/*.jar
